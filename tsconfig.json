@@ -31,6 +31,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    "importHelpers": true
+    "importHelpers": true,
+    "allowSyntheticDefaultImports": true
   }
 }
