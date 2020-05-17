@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { Sidebar } from './Sidebar';
+import { CharSheet } from './CharSheet';
 
 // TODO: clean this up
 require('./App.scss'); 
@@ -8,12 +9,12 @@ require('./App.scss');
 export const App = (): React.ReactElement => {
   return (
     <div className='App columns'>
-      <div className='column is-narrow is-sidebar is-2'>
+      <div className='column is-narrow is-sidebar'>
         <button className='button is-burger is-primary is-small' />
         <Sidebar />
       </div>
       <div className='column'>
-      <a className='button is-primary'> Hello World! </a>
+        <CharSheet />
       </div>
     </div>
   )
