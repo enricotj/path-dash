@@ -2,9 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { App } from './components/App';
 
+// Import global styling
 require('./styles.scss');
 
 ReactDOM.render(
-  <App/>,
+  <App />,
   document.getElementById('root')
 );
