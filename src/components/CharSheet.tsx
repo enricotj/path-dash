@@ -8,11 +8,11 @@ export const CharSheet = (): React.ReactElement => {
   const abilities = Object.entries(Ability).map(([key, val]) => (<AbilityScore key={ key } ability={ val as Ability } />));
 
   return (
-    <div className=''>
+    <>
       <label className='label is-large'>Ability Scores</label>
       <div>
         { abilities }
       </div>
-    </div>
+    </>
   );
 };
