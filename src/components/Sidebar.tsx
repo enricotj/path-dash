@@ -19,9 +19,9 @@ export const Sidebar = (): React.ReactElement => {
         Character
       </p>
       <ul className='menu-list'>
-        <li><a className='is-active'>Stats</a></li>
+        <li><a>Stats</a></li>
         <li><a>Equipment</a></li>
-        <li><a>Notes</a></li>
+        <li><a className='is-active'>Notes</a></li>
       </ul>
       <p className='menu-label'>
         Account

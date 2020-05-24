@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Sidebar } from './Sidebar';
-import { CharSheet } from './CharSheet';
+// import { CharSheet } from './CharSheet';
+import { Notes } from './Notes';
 
 // TODO: clean this up
 require('./App.scss'); 
@@ -14,7 +15,12 @@ export const App = (): React.ReactElement => {
         <Sidebar />
       </div>
       <div className='column'>
-        <CharSheet />
+        {
+          // <CharSheet />
+        }
+        {
+          <Notes/>
+        }
       </div>
     </div>
   )
