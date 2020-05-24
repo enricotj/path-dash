@@ -4,13 +4,18 @@ import React from 'react';
 
 TODO:
 - Add delete functionality (with modal dialog)
+- Fix edit bug with keyboard navigation (start editting a note, tab to another one and try editing it)
+- Import from CSV
 - Fix vertical scroll
 - Fix horizontal scroll
+- Note re-ordering (drag & drop, keyboard control, etc.)
+- Insert notes in stack functionality (similar to how you insert columns to a table in Word?)
 - Fix empty space notes
 - Add keyboard shortcut to go back to previously edited note
 
 COMMAND LINE UPGRADES:
 - Color coded tags
+- 'bang' commands: !loot or !treasure, for example
 - @mentions (with auto-complete and fuzzy match)
   - Modal to add new NPC if no mention found
 
