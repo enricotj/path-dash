@@ -1,5 +1,21 @@
 import React from 'react';
 
+/*
+
+TODO:
+- Add delete functionality (with modal dialog)
+- Fix vertical scroll
+- Fix horizontal scroll
+- Fix empty space notes
+- Add keyboard shortcut to go back to previously edited note
+
+COMMAND LINE UPGRADES:
+- Color coded tags
+- @mentions (with auto-complete and fuzzy match)
+  - Modal to add new NPC if no mention found
+
+*/
+
 export const Notes = (): React.ReactElement => {
   const [ text, setText ] = React.useState('');
   const [ notes, setNotes ] = React.useState<string[]>([]);
