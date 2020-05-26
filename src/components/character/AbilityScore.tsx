@@ -28,18 +28,19 @@ export const AbilityScore = (props: IAbilityScoreProps): React.ReactElement => {
 
   return (
     <div className='columns is-vcentered' style={ { width: '300px' } }>
+
       <div className='column is-2'>
         <label className='label'> { props.ability } </label>
       </div>
+
       <div className='column'>
-        <div className='control'>
-          <input className='input' type='number' placeholder='10' value={ score } onChange={ onScoreChange } />
-        </div>
+        <input className='input' type='number' placeholder='10' value={ score } onChange={ onScoreChange } />
       </div>
 
       <div className='column'>
         <label className='label'>{ Math.floor((score - 10) / 2).toString() }</label>
       </div>
+
     </div>
   );
 };

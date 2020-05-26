@@ -10,11 +10,11 @@ require('./App.scss');
 export const App = (): React.ReactElement => {
   return (
     <div className='App columns'>
-      <div className='column is-narrow is-sidebar'>
-        <button className='button is-burger is-primary is-small' />
+      <div className='is-sidebar'>
+        <button className='button is-burger is-primary is-small is-paddingless' style={ { margin:'8px', width: '20px', height: '20px' } } />
         <Sidebar />
       </div>
-      <div className='column'>
+      <div className='column' style={ { overflowY: 'scroll', height: '100%' } }>
         {
           // <CharSheet />
         }
