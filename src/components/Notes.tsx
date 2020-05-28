@@ -3,18 +3,18 @@ import React from 'react';
 /*
 
 TODO:
-- Note re-ordering (drag & drop, keyboard control, etc.)
+- Note re-ordering via keyboard controls
+- List virtualization
+- Refactor out stylings
 - Insert notes in stack functionality (similar to how you insert columns to a table in Word?)
 - Add keyboard shortcut to go back to previously edited note
 - Import from CSV
-- List virtualization
 - Hook up Firebase
 - Hook up Redux
-- Refactor out stylings
 
 COMMAND LINE UPGRADES:
 - Color coded tags
-- 'bang' commands: !loot or !treasure, for example
+- 'bang' or 'slash' commands: !loot or !treasure or /loot, for example
 - @mentions (with auto-complete and fuzzy match)
   - Modal to add new NPC if no mention found
 
@@ -105,46 +105,70 @@ export const Notes = (): React.ReactElement => {
     }
   }, [delIndex, delConfirmRef.current, textRef.current]);
 
-  // Map the list of notes to their appropriate HTML elements.
-  const noteItems =
-    notes.map((note, index) => {
-      // If a note is being edited, render it as a text box.
-      if (index === editIndex) {
-        return (
-          <textarea
-            className='list-item textarea is-focused has-fixed-size'
-            onFocus={ (ev: React.FocusEvent<HTMLTextAreaElement>) => { ev.target.select() } }
-            autoFocus
-            key={ index }
-            value={ editText }
-            onKeyDown={ onEditKeyDown }
-            onChange={ onEdit }
-            onBlur={ () => editNote(-1, true /* disableTextFocus */) } /> );
-      }
+  const onDragStart = React.useCallback((ev: React.DragEvent, index) => {
+    console.log(index);
+    ev.dataTransfer.setData('index', index);
+  }, []);
 
-      // Otherwise, the note should be rendered as a link with a 'delete' button.
-     return (
-      <a
-        className='list-item'
-        key={ index }
-        tabIndex={ 0 }
-        title={ note }
-        onClick={ () => { onStartEdit(note, index); } }
-        onKeyDown={ (ev) => { onNoteKeyDown(ev, note, index); } }>
-        <div className='columns is-mobile'>
-          <div className='column' style={ { textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' } }>
-            { note ? note : (<>&nbsp;</>) }
-          </div>
-          <div className='is-flex' style={ { width: '55px', alignItems:'center', justifyContent:'center' } }>
-            <button
-              tabIndex={ -1 }
-              className='button delete is-danger'
-              onClick={ (ev) => { ev.stopPropagation(); setDelIndex(index); } }
-            />
-          </div>
+  const onDrop = React.useCallback((ev: React.DragEvent, dropIndex) => {
+    const dragIndex = parseInt(ev.dataTransfer.getData('index'));
+    console.log(dropIndex);
+    if (dragIndex !== dropIndex) {
+      const dragValue = notes[dragIndex];
+      // Insert the dragged value into the drop position.
+      const finalDropIndex = (dropIndex > dragIndex) ? (dropIndex + 1) : dropIndex;
+      const newNotes = [ ...notes.slice(0, finalDropIndex), dragValue, ...notes.slice(finalDropIndex) ];
+
+      // Remove the dragged value from its original position in the new array.
+      // The original value's index will be +1 if dragIndex > dropIndex.
+      const finalDragIndex = (dragIndex > dropIndex) ? (dragIndex + 1) : (dragIndex);
+      setNotes([ ...newNotes.slice(0, finalDragIndex), ...newNotes.slice(finalDragIndex + 1) ]);
+    }
+  }, [notes]);
+
+  // Map the list of notes to their appropriate HTML elements.
+  const noteItems = notes.map((note, index) => {
+    // If a note is being edited, render it as a text box.
+    if (index === editIndex) {
+      return (
+        <textarea
+          className='list-item textarea is-focused has-fixed-size'
+          onFocus={ (ev: React.FocusEvent<HTMLTextAreaElement>) => { ev.target.select() } }
+          autoFocus
+          key={ index }
+          value={ editText }
+          onKeyDown={ onEditKeyDown }
+          onChange={ onEdit }
+          onBlur={ () => editNote(-1, true /* disableTextFocus */) } /> );
+    }
+
+    // Otherwise, the note should be rendered as a link with a 'delete' button.
+    return (
+    <a
+      className='list-item'
+      draggable={ true }
+      key={ index }
+      tabIndex={ 0 }
+      title={ note }
+      onClick={ () => { onStartEdit(note, index); } }
+      onKeyDown={ (ev) => { onNoteKeyDown(ev, note, index); } }
+      onDragStart={ (ev) => { ev.stopPropagation(); onDragStart(ev, index); } }
+      onDragOver={ (ev) => ev.preventDefault() }
+      onDrop={ (ev) => { onDrop(ev, index); } }>
+      <div className='columns is-mobile'>
+        <div className='column' style={ { textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' } }>
+          { note ? note : (<>&nbsp;</>) }
         </div>
-      </a>);
-    });
+        <div className='is-flex' style={ { width: '55px', alignItems:'center', justifyContent:'center' } }>
+          <button
+            tabIndex={ -1 }
+            className='button delete is-danger'
+            onClick={ (ev) => { ev.stopPropagation(); setDelIndex(index); } }
+          />
+        </div>
+      </div>
+    </a>);
+  });
 
   return (
     <div style={ { width: '100%', height: '100%' } }>
