@@ -105,14 +105,17 @@ export const Notes = (): React.ReactElement => {
     }
   }, [delIndex, delConfirmRef.current, textRef.current]);
 
-  const onDragStart = React.useCallback((ev: React.DragEvent, index) => {
+  // BEGIN Drag & Drop list reordering logic
+  //
+  const onDragStart = React.useCallback((ev: React.DragEvent<HTMLElement>, index) => {
     console.log(index);
     ev.dataTransfer.setData('index', index);
+    ev.currentTarget.focus();
   }, []);
 
   const onDrop = React.useCallback((ev: React.DragEvent, dropIndex) => {
+    ev.currentTarget.classList.remove('has-background-primary');
     const dragIndex = parseInt(ev.dataTransfer.getData('index'));
-    console.log(dropIndex);
     if (dragIndex !== dropIndex) {
       const dragValue = notes[dragIndex];
       // Insert the dragged value into the drop position.
@@ -125,6 +128,18 @@ export const Notes = (): React.ReactElement => {
       setNotes([ ...newNotes.slice(0, finalDragIndex), ...newNotes.slice(finalDragIndex + 1) ]);
     }
   }, [notes]);
+
+  const onDragEnter = React.useCallback((ev: React.DragEvent) => {
+    ev.preventDefault();
+    ev.currentTarget.classList.add('has-background-primary');
+  }, []);
+
+  const onDragExit = React.useCallback((ev: React.DragEvent) => {
+    ev.preventDefault();
+    ev.currentTarget.classList.remove('has-background-primary');
+  }, []);
+  //
+  // END Drag & Drop list reordering logic
 
   // Map the list of notes to their appropriate HTML elements.
   const noteItems = notes.map((note, index) => {
@@ -153,6 +168,8 @@ export const Notes = (): React.ReactElement => {
       onClick={ () => { onStartEdit(note, index); } }
       onKeyDown={ (ev) => { onNoteKeyDown(ev, note, index); } }
       onDragStart={ (ev) => { ev.stopPropagation(); onDragStart(ev, index); } }
+      onDragEnter={ (ev) => onDragEnter(ev) }
+      onDragExit={ (ev) => onDragExit(ev) }
       onDragOver={ (ev) => ev.preventDefault() }
       onDrop={ (ev) => { onDrop(ev, index); } }>
       <div className='columns is-mobile'>
