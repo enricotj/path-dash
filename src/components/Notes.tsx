@@ -6,6 +6,7 @@ TODO:
 - List virtualization
 - Refactor out stylings
 - Insert notes in stack functionality (similar to how you insert columns to a table in Word?)
+- Clean up long function.
 - Improve focus behavior (auto-focus back on previously focused note instead of command line, etc.)
 - Add keyboard shortcut to go back to previously edited note
 - Import from CSV
