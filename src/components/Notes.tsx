@@ -3,14 +3,15 @@ import React from 'react';
 /*
 
 TODO:
-- Note re-ordering via keyboard controls
 - List virtualization
 - Refactor out stylings
 - Insert notes in stack functionality (similar to how you insert columns to a table in Word?)
+- Improve focus behavior (auto-focus back on previously focused note instead of command line, etc.)
 - Add keyboard shortcut to go back to previously edited note
 - Import from CSV
 - Hook up Firebase
 - Hook up Redux
+- Note re-ordering via keyboard controls
 
 COMMAND LINE UPGRADES:
 - Color coded tags
@@ -26,8 +27,22 @@ export const Notes = (): React.ReactElement => {
   const [ editIndex, setEditIndex ] = React.useState(-1);
   const [ editText, setEditText ] = React.useState('');
   const [ delIndex, setDelIndex ] = React.useState(-1);
-  const textRef = React.createRef<HTMLInputElement>();
-  const delConfirmRef = React.createRef<HTMLButtonElement>();
+  const textRef = React.useRef<HTMLInputElement>(null);
+  const editTextRef = React.useRef<HTMLTextAreaElement>(null);
+  const delConfirmRef = React.useRef<HTMLButtonElement>(null);
+
+  // BEGIN test data
+  //
+  React.useEffect(() => {
+    let i: number = 0;
+    let initNotes: string[] = [];
+    for (i = 0; i < 30; i++) { 
+      initNotes.push(i.toString());
+    }
+    setNotes(initNotes);
+  }, [false]);
+  //
+  // END test data
 
   // Save the text to the list of notes on 'Enter'.
   const onKeyDown = React.useCallback(
@@ -44,25 +59,24 @@ export const Notes = (): React.ReactElement => {
       setText(ev.target.value);
     }, []);
   
-  // Save in-line note edit.
+  // Save current note edit and set new edit index.
   const editNote = React.useCallback(
-    (newEditIndex, disableTextFocus?: boolean) => {
+    (newEditIndex) => {
       if (editIndex >= 0) {
         let newNotes = notes;
         newNotes[editIndex] = editText;
         setNotes(newNotes);
       }
-      if ((newEditIndex < 0) && textRef.current && !disableTextFocus) {
-        textRef.current.focus();
-      }
       setEditIndex(newEditIndex);
-    }, [notes, editIndex, editText, textRef.current]);
+    }, [notes, editIndex, editText]);
 
-  // Save the in-line note edit on 'Enter'.
+  // Save the note edit on 'Enter'.
   const onEditKeyDown = React.useCallback(
     (ev: React.KeyboardEvent): void => {
       if (ev.key === 'Enter') {
         editNote(-1);
+      } else if (ev.key === 'Escape') {
+        setEditIndex(-1);
       }
     }, [editNote]);
   
@@ -91,11 +105,16 @@ export const Notes = (): React.ReactElement => {
       ev.preventDefault();
     } else if (ev.key === 'Backspace' || ev.key === 'Delete' ) {
       setDelIndex(index);
+      ev.preventDefault();
     }
   }, [onStartEdit]);
 
   React.useEffect(() => {
-    if ((delIndex >= 0) && delConfirmRef.current) {
+    if ((editIndex >= 0) && editTextRef.current) {
+      // When the user tries to edit a note, ensure that the editing text area of 
+      // the modal dialog receives immediate focus.
+      editTextRef.current.focus();
+    } else if ((delIndex >= 0) && delConfirmRef.current) {
       // When the user tries to delete a note, ensure that the 'delete' button of 
       // the modal confirmation dialog receives immediate focus.
       delConfirmRef.current.focus();
@@ -103,7 +122,7 @@ export const Notes = (): React.ReactElement => {
       // If the user has closed the modal delete confirmation dialog, refocus on the text field.
       textRef.current.focus();
     }
-  }, [delIndex, delConfirmRef.current, textRef.current]);
+  }, [editIndex, editTextRef, delIndex, delConfirmRef.current, textRef.current]);
 
   // BEGIN Drag & Drop list reordering logic
   //
@@ -143,21 +162,6 @@ export const Notes = (): React.ReactElement => {
 
   // Map the list of notes to their appropriate HTML elements.
   const noteItems = notes.map((note, index) => {
-    // If a note is being edited, render it as a text box.
-    if (index === editIndex) {
-      return (
-        <textarea
-          className='list-item textarea is-focused has-fixed-size'
-          onFocus={ (ev: React.FocusEvent<HTMLTextAreaElement>) => { ev.target.select() } }
-          autoFocus
-          key={ index }
-          value={ editText }
-          onKeyDown={ onEditKeyDown }
-          onChange={ onEdit }
-          onBlur={ () => editNote(-1, true /* disableTextFocus */) } /> );
-    }
-
-    // Otherwise, the note should be rendered as a link with a 'delete' button.
     return (
     <a
       className='list-item'
@@ -188,16 +192,40 @@ export const Notes = (): React.ReactElement => {
   });
 
   return (
-    <div style={ { width: '100%', height: '100%' } }>
+    <div className='is-flex' style={ { flexFlow:'column', width:'100%', flexGrow:1 } }>
 
       { /* Text box to enter new notes */ }
-      <input ref={ textRef } className='input' type='text' autoFocus value={ text } onKeyDown={ onKeyDown } onChange={ onChange } />
+      <input style={{ height:'40px' }} ref={ textRef } className='input' type='text' autoFocus value={ text } onKeyDown={ onKeyDown } onChange={ onChange } />
       
-      { /* List of notes */ }
-      <div className='panel list is-hoverable' style={ { marginTop: '10px', height: '90%%', maxWidth: '100%' } }>
+      { /* List of notes in scrollable panel */ }
+      <div className='panel list is-hoverable' tabIndex={-1} style={ { overflowY:'scroll', marginTop:'10px', marginBottom:'0px', maxWidth:'100%', flexGrow:1 } }>
         { noteItems }
       </div>
-      
+
+      { /* Modal dialog for editing notes. */ }
+      <div className={ 'modal' + ((editIndex >= 0) ? ' is-active' : '') }>
+        <div className='modal-background'/>
+        <div className='modal-card'>
+          <header className='modal-card-head'>
+            <p className='modal-card-title'>Edit this note</p>
+            <button className='delete' aria-label='close' onClick={ () => { setEditIndex(-1); } }/>
+          </header>
+          <section className='modal-card-body'>
+            <textarea
+              ref={ editTextRef }
+              className='list-item textarea is-focused has-fixed-size'
+              value={ editText }
+              onKeyDown={ onEditKeyDown }
+              onChange={ onEdit } />
+          </section>
+          <footer className='modal-card-foot'>
+            <button className='button is-primary' onClick={ () => editNote(-1) }>Edit</button>
+            <button className='button' onClick={ () => { setEditIndex(-1); } }>Cancel</button>
+          </footer>
+        </div>
+        <button className='modal-close is-large' aria-label='close'></button>
+      </div>
+
       { /* Modal confirmation dialog for deleting notes. */ }
       <div className={ 'modal' + ((delIndex >= 0) ? ' is-active' : '') }>
         <div className='modal-background'/>
@@ -216,6 +244,7 @@ export const Notes = (): React.ReactElement => {
         </div>
         <button className='modal-close is-large' aria-label='close'></button>
       </div>
+
     </div>
   );
 };
