@@ -195,10 +195,23 @@ export const Notes = (): React.ReactElement => {
     <div className='is-flex' style={ { flexFlow:'column', width:'100%', flexGrow:1 } }>
 
       { /* Text box to enter new notes */ }
-      <input style={{ height:'40px' }} ref={ textRef } className='input' type='text' autoFocus value={ text } onKeyDown={ onKeyDown } onChange={ onChange } />
+      <input
+        style={{ height:'40px' }}
+        ref={ textRef }
+        className='input'
+        type='text'
+        autoFocus
+        value={ text }
+        onKeyDown={ onKeyDown }
+        onChange={ onChange }
+      />
       
       { /* List of notes in scrollable panel */ }
-      <div className='panel list is-hoverable' tabIndex={-1} style={ { overflowY:'scroll', marginTop:'10px', marginBottom:'0px', maxWidth:'100%', flexGrow:1 } }>
+      <div
+        className='panel list is-hoverable'
+        tabIndex={-1}
+        style={ { overflowY:'scroll', marginTop:'10px', marginBottom:'0px', maxWidth:'100%', flexGrow:1 } }
+      >
         { noteItems }
       </div>
 
@@ -238,7 +251,13 @@ export const Notes = (): React.ReactElement => {
             { (delIndex >= 0) && notes[delIndex] }
           </section>
           <footer className='modal-card-foot'>
-            <button className='button is-danger' ref={delConfirmRef} onClick={() => deleteNote(delIndex) }>Delete</button>
+            <button
+              className='button is-danger'
+              ref={delConfirmRef}
+              onClick={() => deleteNote(delIndex) }
+            >
+              Delete
+            </button>
             <button className='button' onClick={ () => { setDelIndex(-1); } }>Cancel</button>
           </footer>
         </div>
