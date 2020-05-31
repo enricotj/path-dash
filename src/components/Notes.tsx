@@ -27,6 +27,12 @@ COMMAND LINE UPGRADES:
 
 const LIST_PADDING = 5;
 
+const outerListContainer = React.forwardRef((props: any, ref: any) => (
+  <div ref={ref} tabIndex={-1} {...props}>
+    { props.children }
+  </div>
+));
+
 export const Notes = (): React.ReactElement => {
   const [ text, setText ] = React.useState('');
   const [ notes, setNotes ] = React.useState<string[]>([]);
@@ -34,7 +40,7 @@ export const Notes = (): React.ReactElement => {
   const [ editText, setEditText ] = React.useState('');
   const [ delIndex, setDelIndex ] = React.useState(-1);
   const textRef = React.useRef<HTMLInputElement>(null);
-  const editTextRef = React.useRef<HTMLTextAreaElement>(null);
+  const editTextRef = React.useRef<HTMLInputElement>(null);
   const delConfirmRef = React.useRef<HTMLButtonElement>(null);
 
   // BEGIN test data
@@ -88,7 +94,7 @@ export const Notes = (): React.ReactElement => {
   
   // Ensure that the text field for the note we are currently editing properly updates.
   const onEdit = React.useCallback(
-    (ev: React.ChangeEvent<HTMLTextAreaElement>): void => {
+    (ev: React.ChangeEvent<HTMLInputElement>): void => {
       setEditText(ev.target.value);
     }, []);
   
@@ -115,6 +121,11 @@ export const Notes = (): React.ReactElement => {
     }
   }, [onStartEdit]);
 
+  // Save the edited note onBlur, except if another note is about to be clicked.
+  const onEditBlur = React.useCallback(() => {
+    editNote(-1);
+  }, [editNote]);
+
   React.useEffect(() => {
     if ((editIndex >= 0) && editTextRef.current) {
       // When the user tries to edit a note, ensure that the editing text area of 
@@ -133,10 +144,9 @@ export const Notes = (): React.ReactElement => {
   // BEGIN Drag & Drop list reordering logic
   //
   const onDragStart = React.useCallback((ev: React.DragEvent<HTMLElement>, index) => {
-    console.log(index);
     ev.dataTransfer.setData('index', index);
     ev.currentTarget.focus();
-  }, []);
+  }, [editNote]);
 
   const onDrop = React.useCallback((ev: React.DragEvent, dropIndex) => {
     ev.currentTarget.classList.remove('has-background-primary');
@@ -171,61 +181,56 @@ export const Notes = (): React.ReactElement => {
   const NoteRow = ({ index, style }: ListChildComponentProps) => {
     const note = notes[index];
     const top = style.top ? style.top.toString() : '0';
+
+    let noteElement = (index === editIndex) ?
+      (<input
+        className='list-item input is-focused'
+        ref={ editTextRef }
+        autoFocus
+        type='text'
+        value={ editText }
+        onKeyDown={ onEditKeyDown }
+        onChange={ onEdit }
+        onBlur={ () => onEditBlur }/>)
+      :
+      (<a
+        className='list-item'
+        draggable={ true }
+        key={ index }
+        tabIndex={ 0 }
+        title={ notes[index] }
+        onClick={ () => { onStartEdit(note, index); } }
+        onKeyDown={ (ev) => { onNoteKeyDown(ev, note, index); } }
+        onDragStart={ (ev) => { ev.stopPropagation(); onDragStart(ev, index); } }
+        onDragEnter={ (ev) => onDragEnter(ev) }
+        onDragExit={ (ev) => onDragExit(ev) }
+        onDragOver={ (ev) => ev.preventDefault() }
+        onDrop={ (ev) => { onDrop(ev, index); } }>
+        <div className='columns is-mobile'>
+          <div className='column' style={ { textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' } }>
+            { note ? note : (<>&nbsp;</>) }
+          </div>
+          <div className='is-flex' style={ { width: '55px', alignItems:'center', justifyContent:'center' } }>
+            <button
+              tabIndex={ -1 }
+              className='button delete is-danger'
+              onClick={ (ev) => { ev.stopPropagation(); setDelIndex(index); } }
+            />
+          </div>
+        </div>
+      </a>);
+
     return (
       <div
-        tabIndex={-1}
         style={{
           ...style,
           top: `${parseFloat(top) + LIST_PADDING}px`,
           paddingLeft: LIST_PADDING,
           paddingRight: LIST_PADDING }}
       >
-        <a
-          className='list-item'
-          draggable={ true }
-          key={ index }
-          tabIndex={ 0 }
-          title={ notes[index] }
-          onClick={ () => { onStartEdit(note, index); } }
-          onKeyDown={ (ev) => { onNoteKeyDown(ev, note, index); } }
-          onDragStart={ (ev) => { ev.stopPropagation(); onDragStart(ev, index); } }
-          onDragEnter={ (ev) => onDragEnter(ev) }
-          onDragExit={ (ev) => onDragExit(ev) }
-          onDragOver={ (ev) => ev.preventDefault() }
-          onDrop={ (ev) => { onDrop(ev, index); } }>
-          <div className='columns is-mobile'>
-            <div className='column' style={ { textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' } }>
-              { note ? note : (<>&nbsp;</>) }
-            </div>
-            <div className='is-flex' style={ { width: '55px', alignItems:'center', justifyContent:'center' } }>
-              <button
-                tabIndex={ -1 }
-                className='button delete is-danger'
-                onClick={ (ev) => { ev.stopPropagation(); setDelIndex(index); } }
-              />
-            </div>
-          </div>
-        </a>
+        { noteElement }
       </div>);
   };
-
-  const listContainer = React.forwardRef(({ style, ...rest }: ListChildComponentProps, ref: any) => {
-    const height = style.height ? style.height.toString() : '0';
-    return (
-    <div
-      ref={ref}
-      tabIndex={-1}
-      style={{
-        ...style,
-        height: `${parseFloat(height) + LIST_PADDING * 2}px`
-      }}
-      {...rest}
-    />);
-  });
-
-  const outerListContainer = React.forwardRef((props, ref: any) => (
-    <div ref={ref} tabIndex={-1} {...props} />
-  ));
 
   return (
     <div className='is-flex' style={ { flexFlow:'column', width:'100%', flexGrow:1 } }>
@@ -256,8 +261,7 @@ export const Notes = (): React.ReactElement => {
                 width={size.width}
                 itemCount={notes.length}
                 itemSize={45}
-                overscanCount={ 5 }
-                innerElementType={ listContainer }
+                overscanCount={ 3 }
                 outerElementType={ outerListContainer }
               >
                 { NoteRow }
@@ -265,30 +269,6 @@ export const Notes = (): React.ReactElement => {
           }}
         </AutoSizer>
           { /*noteItems*/ }
-      </div>
-
-      { /* Modal dialog for editing notes. */ }
-      <div className={ 'modal' + ((editIndex >= 0) ? ' is-active' : '') }>
-        <div className='modal-background'/>
-        <div className='modal-card'>
-          <header className='modal-card-head'>
-            <p className='modal-card-title'>Edit this note</p>
-            <button className='delete' aria-label='close' onClick={ () => { setEditIndex(-1); } }/>
-          </header>
-          <section className='modal-card-body'>
-            <textarea
-              ref={ editTextRef }
-              className='list-item textarea is-focused has-fixed-size'
-              value={ editText }
-              onKeyDown={ onEditKeyDown }
-              onChange={ onEdit } />
-          </section>
-          <footer className='modal-card-foot'>
-            <button className='button is-primary' onClick={ () => editNote(-1) }>Edit</button>
-            <button className='button' onClick={ () => { setEditIndex(-1); } }>Cancel</button>
-          </footer>
-        </div>
-        <button className='modal-close is-large' aria-label='close'></button>
       </div>
 
       { /* Modal confirmation dialog for deleting notes. */ }
