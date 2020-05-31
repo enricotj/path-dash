@@ -1,9 +1,12 @@
 import React from 'react';
 
+import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
+import { Size } from 'react-virtualized-auto-sizer';
+import AutoSizer from 'react-virtualized-auto-sizer';
+
 /*
 
 TODO:
-- List virtualization
 - Refactor out stylings
 - Insert notes in stack functionality (similar to how you insert columns to a table in Word?)
 - Clean up long function.
@@ -37,7 +40,7 @@ export const Notes = (): React.ReactElement => {
   React.useEffect(() => {
     let i: number = 0;
     let initNotes: string[] = [];
-    for (i = 0; i < 30; i++) { 
+    for (i = 0; i < 1000; i++) { 
       initNotes.push(i.toString());
     }
     setNotes(initNotes);
@@ -162,35 +165,38 @@ export const Notes = (): React.ReactElement => {
   // END Drag & Drop list reordering logic
 
   // Map the list of notes to their appropriate HTML elements.
-  const noteItems = notes.map((note, index) => {
+
+  const NoteRow = ({ index, style }: ListChildComponentProps) => {
+    const note = notes[index];
     return (
-    <a
-      className='list-item'
-      draggable={ true }
-      key={ index }
-      tabIndex={ 0 }
-      title={ note }
-      onClick={ () => { onStartEdit(note, index); } }
-      onKeyDown={ (ev) => { onNoteKeyDown(ev, note, index); } }
-      onDragStart={ (ev) => { ev.stopPropagation(); onDragStart(ev, index); } }
-      onDragEnter={ (ev) => onDragEnter(ev) }
-      onDragExit={ (ev) => onDragExit(ev) }
-      onDragOver={ (ev) => ev.preventDefault() }
-      onDrop={ (ev) => { onDrop(ev, index); } }>
-      <div className='columns is-mobile'>
-        <div className='column' style={ { textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' } }>
-          { note ? note : (<>&nbsp;</>) }
+      <a
+        className='list-item'
+        style={ style }
+        draggable={ true }
+        key={ index }
+        tabIndex={ 0 }
+        title={ notes[index] }
+        onClick={ () => { onStartEdit(note, index); } }
+        onKeyDown={ (ev) => { onNoteKeyDown(ev, note, index); } }
+        onDragStart={ (ev) => { ev.stopPropagation(); onDragStart(ev, index); } }
+        onDragEnter={ (ev) => onDragEnter(ev) }
+        onDragExit={ (ev) => onDragExit(ev) }
+        onDragOver={ (ev) => ev.preventDefault() }
+        onDrop={ (ev) => { onDrop(ev, index); } }>
+        <div className='columns is-mobile'>
+          <div className='column' style={ { textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' } }>
+            { note ? note : (<>&nbsp;</>) }
+          </div>
+          <div className='is-flex' style={ { width: '55px', alignItems:'center', justifyContent:'center' } }>
+            <button
+              tabIndex={ -1 }
+              className='button delete is-danger'
+              onClick={ (ev) => { ev.stopPropagation(); setDelIndex(index); } }
+            />
+          </div>
         </div>
-        <div className='is-flex' style={ { width: '55px', alignItems:'center', justifyContent:'center' } }>
-          <button
-            tabIndex={ -1 }
-            className='button delete is-danger'
-            onClick={ (ev) => { ev.stopPropagation(); setDelIndex(index); } }
-          />
-        </div>
-      </div>
-    </a>);
-  });
+      </a>);
+  };
 
   return (
     <div className='is-flex' style={ { flexFlow:'column', width:'100%', flexGrow:1 } }>
@@ -211,9 +217,22 @@ export const Notes = (): React.ReactElement => {
       <div
         className='panel list is-hoverable'
         tabIndex={-1}
-        style={ { overflowY:'scroll', marginTop:'10px', marginBottom:'0px', maxWidth:'100%', flexGrow:1 } }
+        style={ { overflow:'hidden', marginTop:'10px', marginBottom:'0px', maxWidth:'100%', flexGrow:1 } }
       >
-        { noteItems }
+        <AutoSizer>
+          {(size: Size): React.ReactNode => {
+            return (
+              <List
+                height={size.height}
+                width={size.width}
+                itemCount={notes.length}
+                itemSize={41}
+              >
+                { NoteRow }
+              </List>);
+          }}
+        </AutoSizer>
+          { /*noteItems*/ }
       </div>
 
       { /* Modal dialog for editing notes. */ }
