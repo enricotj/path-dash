@@ -25,6 +25,8 @@ COMMAND LINE UPGRADES:
 
 */
 
+const LIST_PADDING = 5;
+
 export const Notes = (): React.ReactElement => {
   const [ text, setText ] = React.useState('');
   const [ notes, setNotes ] = React.useState<string[]>([]);
@@ -168,35 +170,62 @@ export const Notes = (): React.ReactElement => {
 
   const NoteRow = ({ index, style }: ListChildComponentProps) => {
     const note = notes[index];
+    const top = style.top ? style.top.toString() : '0';
     return (
-      <a
-        className='list-item'
-        style={ style }
-        draggable={ true }
-        key={ index }
-        tabIndex={ 0 }
-        title={ notes[index] }
-        onClick={ () => { onStartEdit(note, index); } }
-        onKeyDown={ (ev) => { onNoteKeyDown(ev, note, index); } }
-        onDragStart={ (ev) => { ev.stopPropagation(); onDragStart(ev, index); } }
-        onDragEnter={ (ev) => onDragEnter(ev) }
-        onDragExit={ (ev) => onDragExit(ev) }
-        onDragOver={ (ev) => ev.preventDefault() }
-        onDrop={ (ev) => { onDrop(ev, index); } }>
-        <div className='columns is-mobile'>
-          <div className='column' style={ { textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' } }>
-            { note ? note : (<>&nbsp;</>) }
+      <div
+        tabIndex={-1}
+        style={{
+          ...style,
+          top: `${parseFloat(top) + LIST_PADDING}px`,
+          paddingLeft: LIST_PADDING,
+          paddingRight: LIST_PADDING }}
+      >
+        <a
+          className='list-item'
+          draggable={ true }
+          key={ index }
+          tabIndex={ 0 }
+          title={ notes[index] }
+          onClick={ () => { onStartEdit(note, index); } }
+          onKeyDown={ (ev) => { onNoteKeyDown(ev, note, index); } }
+          onDragStart={ (ev) => { ev.stopPropagation(); onDragStart(ev, index); } }
+          onDragEnter={ (ev) => onDragEnter(ev) }
+          onDragExit={ (ev) => onDragExit(ev) }
+          onDragOver={ (ev) => ev.preventDefault() }
+          onDrop={ (ev) => { onDrop(ev, index); } }>
+          <div className='columns is-mobile'>
+            <div className='column' style={ { textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' } }>
+              { note ? note : (<>&nbsp;</>) }
+            </div>
+            <div className='is-flex' style={ { width: '55px', alignItems:'center', justifyContent:'center' } }>
+              <button
+                tabIndex={ -1 }
+                className='button delete is-danger'
+                onClick={ (ev) => { ev.stopPropagation(); setDelIndex(index); } }
+              />
+            </div>
           </div>
-          <div className='is-flex' style={ { width: '55px', alignItems:'center', justifyContent:'center' } }>
-            <button
-              tabIndex={ -1 }
-              className='button delete is-danger'
-              onClick={ (ev) => { ev.stopPropagation(); setDelIndex(index); } }
-            />
-          </div>
-        </div>
-      </a>);
+        </a>
+      </div>);
   };
+
+  const listContainer = React.forwardRef(({ style, ...rest }: ListChildComponentProps, ref: any) => {
+    const height = style.height ? style.height.toString() : '0';
+    return (
+    <div
+      ref={ref}
+      tabIndex={-1}
+      style={{
+        ...style,
+        height: `${parseFloat(height) + LIST_PADDING * 2}px`
+      }}
+      {...rest}
+    />);
+  });
+
+  const outerListContainer = React.forwardRef((props, ref: any) => (
+    <div ref={ref} tabIndex={-1} {...props} />
+  ));
 
   return (
     <div className='is-flex' style={ { flexFlow:'column', width:'100%', flexGrow:1 } }>
@@ -226,7 +255,10 @@ export const Notes = (): React.ReactElement => {
                 height={size.height}
                 width={size.width}
                 itemCount={notes.length}
-                itemSize={41}
+                itemSize={45}
+                overscanCount={ 5 }
+                innerElementType={ listContainer }
+                outerElementType={ outerListContainer }
               >
                 { NoteRow }
               </List>);
