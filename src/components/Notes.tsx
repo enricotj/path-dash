@@ -16,6 +16,9 @@ TODO:
 - Hook up Firebase
 - Hook up Redux
 - Note re-ordering via keyboard controls
+- Archiving
+  - Automatic archiving (for sessions)
+  - Manual archiving
 
 COMMAND LINE UPGRADES:
 - Color coded tags
@@ -36,12 +39,14 @@ const outerListContainer = React.forwardRef((props: any, ref: any) => (
 export const Notes = (): React.ReactElement => {
   const [ text, setText ] = React.useState('');
   const [ notes, setNotes ] = React.useState<string[]>([]);
-  const [ editIndex, setEditIndex ] = React.useState(-1);
   const [ editText, setEditText ] = React.useState('');
+  const [ editIndex, setEditIndex ] = React.useState(-1);
+  const [ focusIndex, setFocusIndex ] = React.useState(-1);
   const [ delIndex, setDelIndex ] = React.useState(-1);
   const textRef = React.useRef<HTMLInputElement>(null);
   const editTextRef = React.useRef<HTMLInputElement>(null);
   const delConfirmRef = React.useRef<HTMLButtonElement>(null);
+  const focusRef = React.useRef<HTMLAnchorElement>(null);
 
   // BEGIN test data
   //
@@ -85,7 +90,7 @@ export const Notes = (): React.ReactElement => {
   // Save the note edit on 'Enter'.
   const onEditKeyDown = React.useCallback(
     (ev: React.KeyboardEvent): void => {
-      if (ev.key === 'Enter') {
+      if (ev.key === 'Enter' || ev.key === 'Tab') {
         editNote(-1);
       } else if (ev.key === 'Escape') {
         setEditIndex(-1);
@@ -118,28 +123,35 @@ export const Notes = (): React.ReactElement => {
     } else if (ev.key === 'Backspace' || ev.key === 'Delete' ) {
       setDelIndex(index);
       ev.preventDefault();
+    } else if (ev.key === 'Escape') {
+      setFocusIndex(-1);
     }
   }, [onStartEdit]);
-
-  // Save the edited note onBlur, except if another note is about to be clicked.
-  const onEditBlur = React.useCallback(() => {
-    editNote(-1);
-  }, [editNote]);
 
   React.useEffect(() => {
     if ((editIndex >= 0) && editTextRef.current) {
       // When the user tries to edit a note, ensure that the editing text area of 
       // the modal dialog receives immediate focus.
+      setFocusIndex(editIndex);
       editTextRef.current.focus();
-    } else if ((delIndex >= 0) && delConfirmRef.current) {
+    } else if ((editIndex < 0) && (focusIndex >= 0)  && focusRef.current) {
+      console.log(focusRef.current);
+      focusRef.current.focus();
+    } else if ((focusIndex < 0) && textRef.current) {
+      textRef.current.focus();
+    }
+  }, [editIndex, focusIndex, editTextRef.current, focusRef.current, textRef.current]);
+
+  React.useEffect(() => {
+    if ((delIndex >= 0) && delConfirmRef.current) {
       // When the user tries to delete a note, ensure that the 'delete' button of 
       // the modal confirmation dialog receives immediate focus.
       delConfirmRef.current.focus();
-    } else if (textRef.current) {
+    } else if (textRef.current && (delIndex < 0)) {
       // If the user has closed the modal delete confirmation dialog, refocus on the text field.
       textRef.current.focus();
     }
-  }, [editIndex, editTextRef, delIndex, delConfirmRef.current, textRef.current]);
+  }, [delIndex, delConfirmRef.current, textRef.current]);
 
   // BEGIN Drag & Drop list reordering logic
   //
@@ -152,17 +164,29 @@ export const Notes = (): React.ReactElement => {
     ev.currentTarget.classList.remove('has-background-primary');
     const dragIndex = parseInt(ev.dataTransfer.getData('index'));
     if (dragIndex !== dropIndex) {
+
+      // Resolve any values currently being edited before reordering.
+      let newNotes = notes;
+      if (editIndex >= 0) {
+        newNotes[editIndex] = editText;
+      }
+
       const dragValue = notes[dragIndex];
       // Insert the dragged value into the drop position.
       const finalDropIndex = (dropIndex > dragIndex) ? (dropIndex + 1) : dropIndex;
-      const newNotes = [ ...notes.slice(0, finalDropIndex), dragValue, ...notes.slice(finalDropIndex) ];
+      newNotes = [ ...newNotes.slice(0, finalDropIndex), dragValue, ...newNotes.slice(finalDropIndex) ];
 
       // Remove the dragged value from its original position in the new array.
       // The original value's index will be +1 if dragIndex > dropIndex.
       const finalDragIndex = (dragIndex > dropIndex) ? (dragIndex + 1) : (dragIndex);
       setNotes([ ...newNotes.slice(0, finalDragIndex), ...newNotes.slice(finalDragIndex + 1) ]);
+
+      setEditIndex(-1);
+
+      const finalFocusIndex = (dropIndex > dragIndex) ? (finalDropIndex - 1) : finalDropIndex;
+      setFocusIndex(finalFocusIndex);
     }
-  }, [notes]);
+  }, [notes, editIndex, editText]);
 
   const onDragEnter = React.useCallback((ev: React.DragEvent) => {
     ev.preventDefault();
@@ -190,14 +214,14 @@ export const Notes = (): React.ReactElement => {
         type='text'
         value={ editText }
         onKeyDown={ onEditKeyDown }
-        onChange={ onEdit }
-        onBlur={ () => onEditBlur }/>)
+        onChange={ onEdit }/>)
       :
       (<a
         className='list-item'
         draggable={ true }
         key={ index }
         tabIndex={ 0 }
+        ref={ (index === focusIndex) ? focusRef : undefined }
         title={ notes[index] }
         onClick={ () => { onStartEdit(note, index); } }
         onKeyDown={ (ev) => { onNoteKeyDown(ev, note, index); } }

@@ -114,3 +114,6 @@ dest
 .yarn/unplugged
 .yarn/build-state.yml
 .pnp.*
+
+# type modules
+*.d.ts
