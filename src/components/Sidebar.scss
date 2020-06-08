@@ -1,6 +1,4 @@
-
-.Sidebar {
-  height: 100%;
-  width: 250px;
+.sidebarMenu {
+  composes: menu from global;
   padding: 12px;
 }

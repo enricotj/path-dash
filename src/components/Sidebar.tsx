@@ -1,11 +1,10 @@
 import React from 'react';
 
-// TODO: clean this up
-require('./Sidebar.scss');
+import styles from './Sidebar.scss';
 
 export const Sidebar = (): React.ReactElement => {
   return (
-    <aside className='menu Sidebar'>
+    <aside className={ styles.sidebarMenu }>
       <p className='menu-label'>
         Party
       </p>
