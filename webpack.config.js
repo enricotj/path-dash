@@ -2,6 +2,8 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
+const isDevelopment = process.env.NODE_ENV === 'development'
+
 module.exports = {
   
   // webpack will take the files from ./src/index
@@ -15,7 +17,7 @@ module.exports = {
 
   // adding .ts and .tsx to resolve.extensions will help babel look for .ts and .tsx files to transpile
   resolve: {
-    extensions: ['.ts', '.tsx', '.js']
+    extensions: ['.ts', '.tsx', '.js', '.sass', '.scss']
   },
 
   module: {
@@ -30,29 +32,50 @@ module.exports = {
         }
       },
 
-      // css-loader to bundle all css files into one file and style-loader to add all the styles inside the style tag of the document
+      // sass-loader (global)
       {
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader']
+        test: /\.global\.s(a|c)ss$/,
+        use: [
+          isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader',
+            options: {
+              modules: false,
+              sourceMap: isDevelopment,
+              importLoaders: 1
+            }
+          },
+          {
+            loader: 'sass-loader',
+            options: {
+              sourceMap: isDevelopment
+            }
+          }
+        ]
       },
 
-      // sass-loader
+      // sass-loader (modules)
       {
-        test: /\.scss$/,
+        test: /\.s(a|c)ss$/,
+        exclude: /\.global\.s(a|c)ss$/,
         use: [
-            MiniCssExtractPlugin.loader,
-            {
-              loader: 'css-loader'
-            },
-            {
-              loader: 'sass-loader',
-              options: {
-                sourceMap: true
-              }
+          isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader',
+            options: {
+              modules: true,
+              sourceMap: isDevelopment,
+              importLoaders: 1
             }
-          ]
+          },
+          {
+            loader: 'sass-loader',
+            options: {
+              sourceMap: isDevelopment
+            }
+          }
+        ]
       }
-
     ],
   },
 
@@ -60,6 +83,9 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './src/index.html'
     }),
-    new MiniCssExtractPlugin({ filename: 'css/styles.css' })
+    new MiniCssExtractPlugin({
+      filename: isDevelopment ? '[name].css' : '[name].[hash].css',
+      chunkFilename: isDevelopment ? '[id].css' : '[id].[hash].css'
+    })
   ]
 };

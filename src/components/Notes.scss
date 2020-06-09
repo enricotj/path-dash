@@ -1,0 +1,43 @@
+
+.notesInput {
+  composes: input from global;
+  height: 40px;
+}
+
+.notesContainer {
+  composes: is-flex from global;
+  flex-flow: column;
+  width: 100%;
+  flex-grow: 1;
+}
+
+.noteListPanel {
+  composes: panel list is-hoverable from global;
+  overflow: hidden;
+  margin-top: 10px;
+  margin-bottom: 0px;
+  max-width: 100%;
+  flex-grow: 1;
+}
+
+.noteEditor {
+  composes: list-item input is-focused from global;
+}
+
+.noteDeleteBtn {
+  composes: button delete is-danger from global;
+}
+
+.noteDeleteContainer {
+  composes: is-flex from global;
+  width: 55px;
+  align-items: center;
+  justify-content: center;
+}
+
+.noteLabel {
+  composes: column from global;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}

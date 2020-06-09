@@ -1,16 +1,27 @@
-
-.App {
+.app {
+  composes: columns is-flex is-marginless from global;
   height: 100%;
   width: 100%;
-  margin: 0px !important;
 }
 
-.is-sidebar {
+.sidebar {
   border-width: thin;
   border-color: gray;
   border-style: solid;
+  height: 100%;
+  width: 250px;
+  overflow: hidden;
 }
 
-.is-burger {
+.menuToggle {
+  composes: button is-primary is-small is-paddingless from global;
   float: right;
+  margin: 8px;
+  width: 30px;
+  height: 30px;
+}
+
+.content {
+  composes: column is-flex from global;
+  overflow: hidden;
 }

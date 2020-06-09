@@ -4,20 +4,18 @@ import { Sidebar } from './Sidebar';
 // import { CharSheet } from './CharSheet';
 import { Notes } from './Notes';
 
-// TODO: clean this up
-require('./App.scss'); 
+import styles from './App.scss';
 
 export const App = (): React.ReactElement => {
   return (
-    <div className='App columns is-flex'>
-      <div className='is-sidebar'>
+    <div className={ styles.app }>
+      <div className={ styles.sidebar }>
         <button
-          className='button is-burger is-primary is-small is-paddingless'
-          style={ { margin:'8px', width: '20px', height: '20px' } }
+          className={ styles.menuToggle }
         />
         <Sidebar />
       </div>
-      <div className='column is-flex' style={ { overflow:'hidden' } }>
+      <div className={ styles.content }>
         {
           // <CharSheet />
         }

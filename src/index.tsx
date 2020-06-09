@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { App } from './components/App';
 
 // Import global styling
-require('./styles.scss');
+import './styles.global';
 
 ReactDOM.render(
   <App />,

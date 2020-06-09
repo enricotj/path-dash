@@ -1,13 +1,14 @@
 import React from 'react';
 
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 import { Size } from 'react-virtualized-auto-sizer';
-import AutoSizer from 'react-virtualized-auto-sizer';
+
+import styles from './Notes.scss';
 
 /*
 
 TODO:
-- Refactor out stylings
 - Insert notes in stack functionality (similar to how you insert columns to a table in Word?)
 - Clean up long function.
 - Improve focus behavior (auto-focus back on previously focused note instead of command line, etc.)
@@ -208,7 +209,7 @@ export const Notes = (): React.ReactElement => {
 
     let noteElement = (index === editIndex) ?
       (<input
-        className='list-item input is-focused'
+        className={ styles.noteEditor }
         ref={ editTextRef }
         autoFocus
         type='text'
@@ -231,13 +232,13 @@ export const Notes = (): React.ReactElement => {
         onDragOver={ (ev) => ev.preventDefault() }
         onDrop={ (ev) => { onDrop(ev, index); } }>
         <div className='columns is-mobile'>
-          <div className='column' style={ { textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' } }>
+          <div className={ styles.noteLabel }>
             { note ? note : (<>&nbsp;</>) }
           </div>
-          <div className='is-flex' style={ { width: '55px', alignItems:'center', justifyContent:'center' } }>
+          <div className={ styles.noteDeleteContainer }>
             <button
               tabIndex={ -1 }
-              className='button delete is-danger'
+              className={ styles.noteDeleteBtn }
               onClick={ (ev) => { ev.stopPropagation(); setDelIndex(index); } }
             />
           </div>
@@ -257,13 +258,12 @@ export const Notes = (): React.ReactElement => {
   };
 
   return (
-    <div className='is-flex' style={ { flexFlow:'column', width:'100%', flexGrow:1 } }>
+    <div className={ styles.notesContainer }>
 
       { /* Text box to enter new notes */ }
       <input
-        style={{ height:'40px' }}
         ref={ textRef }
-        className='input'
+        className={ styles.notesInput }
         type='text'
         autoFocus
         value={ text }
@@ -272,11 +272,7 @@ export const Notes = (): React.ReactElement => {
       />
       
       { /* List of notes in scrollable panel */ }
-      <div
-        className='panel list is-hoverable'
-        tabIndex={-1}
-        style={ { overflow:'hidden', marginTop:'10px', marginBottom:'0px', maxWidth:'100%', flexGrow:1 } }
-      >
+      <div className={ styles.noteListPanel } tabIndex={-1}>
         <AutoSizer>
           {(size: Size): React.ReactNode => {
             return (
