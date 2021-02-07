@@ -37,10 +37,15 @@ const outerListContainer = React.forwardRef((props: any, ref: any) => (
   </div>
 ));
 
+interface EditState {
+  text: string;
+  selectionStart: number;
+}
+
 export const Notes = (): React.ReactElement => {
   const [ text, setText ] = React.useState('');
   const [ notes, setNotes ] = React.useState<string[]>([]);
-  const [ editText, setEditText ] = React.useState('');
+  const [ editState, setEditState ] = React.useState<EditState>({ text: '', selectionStart: 0});
   const [ editIndex, setEditIndex ] = React.useState(-1);
   const [ focusIndex, setFocusIndex ] = React.useState(-1);
   const [ delIndex, setDelIndex ] = React.useState(-1);
@@ -76,17 +81,22 @@ export const Notes = (): React.ReactElement => {
     (ev: React.ChangeEvent<HTMLInputElement>): void => {
       setText(ev.target.value);
     }, []);
+
+  const onFocus = React.useCallback(() => {
+    setEditIndex(-1);
+    setFocusIndex(-1);
+  }, []);
   
   // Save current note edit and set new edit index.
   const editNote = React.useCallback(
     (newEditIndex) => {
       if (editIndex >= 0) {
         let newNotes = notes;
-        newNotes[editIndex] = editText;
+        newNotes[editIndex] = editState.text;
         setNotes(newNotes);
       }
       setEditIndex(newEditIndex);
-    }, [notes, editIndex, editText]);
+    }, [notes, editIndex, editState]);
 
   // Save the note edit on 'Enter'.
   const onEditKeyDown = React.useCallback(
@@ -101,14 +111,20 @@ export const Notes = (): React.ReactElement => {
   // Ensure that the text field for the note we are currently editing properly updates.
   const onEdit = React.useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>): void => {
-      setEditText(ev.target.value);
+      setEditState({
+        text: ev.target.value,
+        selectionStart: ev.target.selectionStart || 0
+      });
     }, []);
   
   // When a note is clicked, start editing it.
   const onStartEdit = React.useCallback((note, index) => {
     editNote(index);
-    setEditText(note);
-  }, [editNote, setEditText]);
+    setEditState({
+      text: note,
+      selectionStart: 0
+    });
+  }, [editNote, setEditState]);
 
   // Delete the note at the given index of the array.
   const deleteNote = React.useCallback((delIndex) => {
@@ -169,7 +185,7 @@ export const Notes = (): React.ReactElement => {
       // Resolve any values currently being edited before reordering.
       let newNotes = notes;
       if (editIndex >= 0) {
-        newNotes[editIndex] = editText;
+        newNotes[editIndex] = editState.text;
       }
 
       const dragValue = notes[dragIndex];
@@ -187,7 +203,7 @@ export const Notes = (): React.ReactElement => {
       const finalFocusIndex = (dropIndex > dragIndex) ? (finalDropIndex - 1) : finalDropIndex;
       setFocusIndex(finalFocusIndex);
     }
-  }, [notes, editIndex, editText]);
+  }, [notes, editIndex, editState.text]);
 
   const onDragEnter = React.useCallback((ev: React.DragEvent) => {
     ev.preventDefault();
@@ -213,7 +229,7 @@ export const Notes = (): React.ReactElement => {
         ref={ editTextRef }
         autoFocus
         type='text'
-        value={ editText }
+        value={ editState.text }
         onKeyDown={ onEditKeyDown }
         onChange={ onEdit }/>)
       :
@@ -269,6 +285,7 @@ export const Notes = (): React.ReactElement => {
         value={ text }
         onKeyDown={ onKeyDown }
         onChange={ onChange }
+        onFocus={ onFocus }
       />
       
       { /* List of notes in scrollable panel */ }
