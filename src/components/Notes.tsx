@@ -40,12 +40,13 @@ const outerListContainer = React.forwardRef((props: any, ref: any) => (
 interface EditState {
   text: string;
   selectionStart: number;
+  selectionEnd: number;
 }
 
 export const Notes = (): React.ReactElement => {
   const [ text, setText ] = React.useState('');
   const [ notes, setNotes ] = React.useState<string[]>([]);
-  const [ editState, setEditState ] = React.useState<EditState>({ text: '', selectionStart: 0});
+  const [ editState, setEditState ] = React.useState<EditState>({ text: '', selectionStart: 0, selectionEnd: 0});
   const [ editIndex, setEditIndex ] = React.useState(-1);
   const [ focusIndex, setFocusIndex ] = React.useState(-1);
   const [ delIndex, setDelIndex ] = React.useState(-1);
@@ -97,6 +98,12 @@ export const Notes = (): React.ReactElement => {
       }
       setEditIndex(newEditIndex);
     }, [notes, editIndex, editState]);
+  
+  // Whenever the notes change, make sure the cursor reverts back to original position on note edit.
+  const onEditFocus = React.useCallback((ev: React.ChangeEvent<HTMLInputElement>) => {
+    ev.target.selectionStart = editState.selectionStart;
+    ev.target.selectionEnd = editState.selectionEnd;
+  }, [editState.selectionStart, editState.selectionEnd]);
 
   // Save the note edit on 'Enter'.
   const onEditKeyDown = React.useCallback(
@@ -113,16 +120,18 @@ export const Notes = (): React.ReactElement => {
     (ev: React.ChangeEvent<HTMLInputElement>): void => {
       setEditState({
         text: ev.target.value,
-        selectionStart: ev.target.selectionStart || 0
+        selectionStart: ev.target.selectionStart || 0,
+        selectionEnd: ev.target.selectionEnd || 0
       });
     }, []);
   
   // When a note is clicked, start editing it.
-  const onStartEdit = React.useCallback((note, index) => {
+  const onStartEdit = React.useCallback((note: string, index) => {
     editNote(index);
     setEditState({
       text: note,
-      selectionStart: 0
+      selectionStart: 0,
+      selectionEnd: note.length
     });
   }, [editNote, setEditState]);
 
@@ -230,6 +239,7 @@ export const Notes = (): React.ReactElement => {
         autoFocus
         type='text'
         value={ editState.text }
+        onFocus={ onEditFocus }
         onKeyDown={ onEditKeyDown }
         onChange={ onEdit }/>)
       :
