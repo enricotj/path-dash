@@ -12,7 +12,8 @@ module.exports = {
   // and output it into /dest as bundle.js
   output: {
     path: path.join(__dirname, '/dest'),
-    filename: 'bundle.js'
+    filename: 'bundle.js',
+    publicPath: '/'
   },
 
   // adding .ts and .tsx to resolve.extensions will help babel look for .ts and .tsx files to transpile
@@ -78,6 +79,12 @@ module.exports = {
       }
     ],
   },
+
+  devServer: {
+    historyApiFallback:{
+        index:'dest/index.html'
+    },
+},
 
   plugins: [
     new HtmlWebpackPlugin({
